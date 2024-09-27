@@ -1,1 +1,1 @@
-# Django Rest based API to store periodical data from Firebase RTDB using PostgreSQL
+# Django Rest based API to store periodical traffic data from Firebase RTDB using PostgreSQL
