@@ -12,6 +12,7 @@ from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):
     """Django command to wait for the database to be available"""
+
     def handle(self, *args, **options):
         """Entrypoint for commands"""
         self.stdout.write('Waiting for database...')
@@ -20,7 +21,7 @@ class Command(BaseCommand):
             try:
                 self.check(databases=['default'])
                 db_up = True
-            except (OperationalError,Psycopg2OpError):
+            except (OperationalError, Psycopg2OpError):
                 self.stdout.write(self.style.ERROR('Database not available,'
                                                    'waiting for 1 second'))
                 time.sleep(1)

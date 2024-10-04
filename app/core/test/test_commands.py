@@ -14,6 +14,7 @@ from django.test import SimpleTestCase
 class CommandTests(SimpleTestCase):
     """Test commands."""
 
+    @staticmethod
     def test_wait_for_db_ready(self, patched_check):
         """Test waiting for db ready."""
         patched_check.return_value = True
@@ -32,3 +33,11 @@ class CommandTests(SimpleTestCase):
 
         self.assertEqual(patched_check.call_count, 6)
         patched_check.assert_called_with(databases=['default'])
+
+
+class HomeTest(SimpleTestCase):
+    """Test home url returning a Hello World repsonse"""
+    def test_home(self):
+        """Test home url returning a Hello World repsonse"""
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
