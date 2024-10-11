@@ -20,7 +20,7 @@ class AdminTests(TestCase):
 
         self.user = get_user_model().objects.create_user(
             email='example@rayhank.com',
-            password = 'changeme123',
+            password='changeme123',
             name='testuser',
         )
 
