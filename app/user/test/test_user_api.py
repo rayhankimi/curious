@@ -12,6 +12,7 @@ from rest_framework import status
 
 CREATE_USER_URL = reverse("user:create")
 TOKEN_URL = reverse("user:token")
+PERSON_URL = reverse("user:person")
 
 
 def create_user(**params):
@@ -115,3 +116,48 @@ class PublicUserTests(TestCase):
         res = self.client.post(TOKEN_URL, payload)
         self.assertNotIn('token', res.data)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_access_other_profile(self):
+        """Test that no user can access other profile"""
+        res = self.client.get(PERSON_URL)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class PrivateUserTests(TestCase):
+    """Test API functionality for registered users"""
+    def setUp(self):
+        self.user = create_user(
+            email='example@rayhank.com',
+            password='changeme',
+            name='test user',
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+    def test_retrieve_profile_success(self):
+        """Test retrieving profile for logged in user"""
+        res = self.client.get(PERSON_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data, {
+            'name': self.user.name,
+            'email': self.user.email,
+        })
+
+    def test_post_not_allowed(self):
+        """Test that post is not allowed for the user endpoint"""
+        res = self.client.post(PERSON_URL, {})
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_update_user_profile(self):
+        """Test changing the user profile for authenticated user"""
+        payload = {
+            'name': 'new name',
+            'password': 'changedpw',
+        }
+
+        res = self.client.patch(PERSON_URL, payload)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.name, payload['name'])
+        self.assertTrue(self.user.check_password(payload['password']))
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
