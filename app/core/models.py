@@ -5,6 +5,8 @@ from django.contrib.auth.models import (
     PermissionsMixin
 )
 
+from app import settings
+
 
 class UserManager(BaseUserManager):
     """Manager for users"""
@@ -43,3 +45,18 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class IoTDevice(models.Model):
+    """IotDevice model / Object"""
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    device_name = models.CharField(max_length=255)
+    device_purpose = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.device_name} - {self.device_purpose}"
