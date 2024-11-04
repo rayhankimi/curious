@@ -33,7 +33,7 @@ class ModelTests(TestCase):
             'changeme123',
         )
         iotdevice = models.IoTDevice.objects.create(
-            owner=user,
+            user=user,
             device_name='ESP32',
             device_purpose='Monitor humidity and temperature',
         )

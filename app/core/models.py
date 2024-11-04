@@ -49,7 +49,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class IoTDevice(models.Model):
     """IotDevice model / Object"""
-    owner = models.ForeignKey(
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )

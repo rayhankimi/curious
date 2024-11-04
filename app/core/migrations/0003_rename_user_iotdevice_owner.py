@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.RenameField(
             model_name='iotdevice',
             old_name='user',
-            new_name='owner',
+            new_name='user',
         ),
     ]
