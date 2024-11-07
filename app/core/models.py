@@ -60,3 +60,22 @@ class IoTDevice(models.Model):
 
     def __str__(self):
         return f"{self.device_name} - {self.device_purpose}"
+
+
+class DeviceValue(models.Model):
+    """Value for IoT Device Model / Object"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    device = models.ForeignKey(
+        'IoTDevice',
+        on_delete=models.CASCADE,
+        related_name='values',
+    )
+    value = models.IntegerField(default=0)
+    taken_at = models.DateTimeField(auto_now_add=True)
+    description = models.JSONField()
+
+    def __str__(self):
+        return f"Device : {self.device} - Value: {self.value} at {self.taken_at}"
