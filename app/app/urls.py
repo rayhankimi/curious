@@ -19,5 +19,4 @@ urlpatterns = [
         SpectacularSwaggerView.as_view(),
         name='api-docs'),
     path('api/user/', include('user.urls')),
-    path('api/device/', include('iotdevice.urls')),
 ]

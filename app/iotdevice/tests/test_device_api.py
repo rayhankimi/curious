@@ -13,7 +13,11 @@ from core.models import IoTDevice
 
 from iotdevice.serializers import DeviceSerializer
 
-DEVICE_URL = reverse('iotdevice:iotdevice-list')
+DEVICE_URL = reverse('user:iotdevice-list')
+
+
+def reverse_device_detail(device_id):
+    return reverse('user:iotdevice-detail', args=[device_id])
 
 
 def create_device(user, **params):
@@ -28,8 +32,14 @@ def create_device(user, **params):
     return device
 
 
+def create_user(**params):
+    """Create a new user"""
+    return get_user_model().objects.create_user(**params)
+
+
 class PublicDeviceApiTests(TestCase):
     """Test unauthenticated device API access"""
+
     def setUp(self):
         self.client = APIClient()
 
@@ -44,38 +54,33 @@ class PrivateDeviceApiTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = get_user_model().objects.create_user(
-            'example@rayhank.com',
-            'changeme'
+        self.user = create_user(
+            email='example@rayhank.com',
+            password='changeme'
         )
         self.client.force_authenticate(self.user)
 
     def test_retrieve_device_list(self):
         """Test retrieving a list of devices"""
-        # Buat dua perangkat dengan user yang sama
-        device1 = create_device(user=self.user)
-        device2 = create_device(user=self.user)
+        create_device(user=self.user)
+        create_device(user=self.user)
 
-        # Lakukan request GET pada endpoint
         res = self.client.get(DEVICE_URL)
 
-        # Ambil perangkat dari database dengan filter dan urutan yang sesuai
         devices = IoTDevice.objects.filter(user=self.user).order_by('-id')
         serializer = DeviceSerializer(devices, many=True)
 
-        # Cocokkan id dari respons API dan serializer data
         response_ids = [device['id'] for device in res.data]
         expected_ids = [device['id'] for device in serializer.data]
 
-        # Assertions
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(response_ids, expected_ids)
 
     def test_recipes_limited_to_user(self):
         """Test that retrieving recipes for authenticated user is limited"""
-        user2 = get_user_model().objects.create_user(
-            'anotheruser@rayhank.com',
-            'changeme123',
+        user2 = create_user(
+            email='anotheruser@rayhank.com',
+            password='changeme123'
         )
         create_device(user=self.user)
         create_device(user=user2)
@@ -102,4 +107,64 @@ class PrivateDeviceApiTests(TestCase):
 
         for key, value in payload.items():
             self.assertEqual(getattr(device, key), value)
+        self.assertEqual(device.user, self.user)
+
+    def test_partial_update_device(self):
+        """Test partial update of a device"""
+        original_purpose = 'Monitor Temperature'
+        device = create_device(
+            user=self.user,
+            device_name='ESP32',
+            device_purpose=original_purpose,
+        )
+        payload = {
+            'device_purpose': 'Monitor Humidity',
+        }
+
+        url = reverse_device_detail(device.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        device.refresh_from_db()
+        self.assertNotEqual(res.data['device_purpose'], original_purpose)
+        self.assertEqual(device.user, self.user)
+        self.assertEqual(device.device_name, res.data['device_name'])
+
+    def test_full_update_device(self):
+        """Test full update of a device"""
+        device = create_device(
+            user=self.user,
+            device_name='ESP32',
+            device_purpose='Display Traffic Light',
+        )
+
+        payload = {
+            'device_name': 'Raspberry Pi',
+            'device_purpose': 'Get Traffic Details',
+        }
+
+        url = reverse_device_detail(device.id)
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        device.refresh_from_db()
+
+        for key, value in payload.items():
+            self.assertEqual(getattr(device, key), value)
+
+        self.assertEqual(device.user, self.user)
+
+    def test_update_user_not_allowed(self):
+        """Test that updating user is forbidden"""
+        another_user = create_user(
+            email='another@rayhank.com',
+            password='changeme123',
+        )
+        device = create_device(user=self.user)
+        payload = {
+            'user': another_user.id,
+        }
+        res = self.client.patch(DEVICE_URL, payload)
+
+        device.refresh_from_db()
         self.assertEqual(device.user, self.user)

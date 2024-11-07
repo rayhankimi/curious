@@ -12,7 +12,7 @@ from iotdevice import serializers
 class DeviceViewSet(viewsets.ModelViewSet):
     """View for manage IoT Device API"""
     queryset = IoTDevice.objects.all().order_by('-id')
-    serializer_class = serializers.DeviceSerializer
+    serializer_class = serializers.DeviceDetailSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
