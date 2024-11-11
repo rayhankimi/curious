@@ -9,11 +9,21 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import IoTDevice
+from core.models import (
+    IoTDevice,
+    DeviceValue,
+)
 
 from iotdevice.serializers import DeviceSerializer
 
 DEVICE_URL = reverse('user:iotdevice-list')
+
+
+def reverse_value(device_id, value_id=0, action='detail'):
+    """Reverse from device value"""
+    if action == 'list':
+        return reverse('user:device-value-list', args=[device_id])
+    return reverse('user:device-value-detail', args=[device_id, value_id])
 
 
 def reverse_device_detail(device_id):
@@ -101,7 +111,6 @@ class PrivateDeviceApiTests(TestCase):
             'device_purpose': 'Monitor Temperature',
         }
         res = self.client.post(DEVICE_URL, payload)
-
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         device = IoTDevice.objects.get(id=res.data['id'])
 
@@ -164,7 +173,41 @@ class PrivateDeviceApiTests(TestCase):
         payload = {
             'user': another_user.id,
         }
-        res = self.client.patch(DEVICE_URL, payload)
+        self.client.patch(DEVICE_URL, payload)
 
         device.refresh_from_db()
         self.assertEqual(device.user, self.user)
+
+    def test_create_device_with_values(self):
+        """Test creating a new device with value"""
+        device = create_device(user=self.user)
+
+        payload = {
+            'user': self.user.id,
+            'device': device.id,
+            'value': 3,
+            'motorcycle_count': 5,
+            'car_count': 2,
+            'smalltruck_count': 1,
+            'bigvehicle_count': 1,
+        }
+
+        # Gunakan `reverse_value` untuk mendapatkan URL yang benar
+        url = reverse_value(device_id=device.id, action='list')
+        res = self.client.post(url, payload)
+
+        # Pastikan status code adalah 201 CREATED
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+        # Ambil objek DeviceValue yang baru dibuat dari database
+        device_value = DeviceValue.objects.get(id=res.data['id'])
+
+        # Verifikasi bahwa data tersimpan dengan benar
+        for key, value in payload.items():
+            if key == 'user' or key == 'device':
+                continue
+            self.assertEqual(getattr(device_value, key), value)
+
+        # Verifikasi user dan device yang terkait
+        self.assertEqual(self.user, device_value.user)
+        self.assertEqual(device, device_value.device)
