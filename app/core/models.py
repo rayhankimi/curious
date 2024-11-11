@@ -74,8 +74,13 @@ class DeviceValue(models.Model):
         related_name='values',
     )
     value = models.IntegerField(default=0)
+    car_count = models.IntegerField(default=0)
+    motorcycle_count = models.IntegerField(default=0)
+    smalltruck_count = models.IntegerField(default=0)
+    bigvehicle_count = models.IntegerField(default=0)
+
     taken_at = models.DateTimeField(auto_now_add=True)
-    description = models.JSONField()
 
     def __str__(self):
-        return f"Device : {self.device} - Value: {self.value} at {self.taken_at}"
+        return (f"Device : {self.device} at {self.taken_at} . Value = {self.value} "
+                f"[{self.motorcycle_count, self.car_count, self.smalltruck_count, self.bigvehicle_count}]")

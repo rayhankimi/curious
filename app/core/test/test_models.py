@@ -77,13 +77,13 @@ class ModelTests(TestCase):
             user=device.user,
             device=device,
             value=9,
-            description={
-                'Car': 9,
-                'Motorcycle': 10,
-                'Small_Truck': 1,
-                'Large_Truck': 2
-            }
+            motorcycle_count=2,
+            car_count=3,
+            smalltruck_count=4,
+            bigvehicle_count=5,
         )
         self.assertEqual(
             str(value1),
-            f"Device : {value1.device} - Value: {value1.value} at {value1.taken_at}")
+            f"Device : {value1.device} at {value1.taken_at} . Value = {value1.value} "
+            f"[{value1.motorcycle_count, value1.car_count, value1.smalltruck_count, value1.bigvehicle_count}]"
+        )
