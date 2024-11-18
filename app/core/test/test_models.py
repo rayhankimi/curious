@@ -22,7 +22,9 @@ def with_sample_user(func):
 
 
 @with_sample_user
-def create_device(user, device_name='ESP32', device_purpose='Monitor Temperature'):
+def create_device(user,
+                  device_name='ESP32',
+                  device_purpose='Monitor Temperature'):
     """Create and return a sample device"""
     return models.IoTDevice.objects.create(
         user=user,
@@ -69,7 +71,10 @@ class ModelTests(TestCase):
             device_name='ESP32',
             device_purpose='Monitor humidity and temperature',
         )
-        self.assertEqual(str(iotdevice), f"{iotdevice.device_name} - {iotdevice.device_purpose}")
+        self.assertEqual(
+            str(iotdevice),
+            f"{iotdevice.device_name} - {iotdevice.device_purpose}"
+        )
 
     def test_create_value(self):
         """Test creating a new value for IoT device"""
@@ -85,8 +90,8 @@ class ModelTests(TestCase):
         )
         self.assertEqual(
             str(value1),
-            f"Device : {value1.device} at {value1.taken_at} . Value = {value1.value} "
-            f"[{value1.motorcycle_count, value1.car_count, value1.smalltruck_count, value1.bigvehicle_count}]"
+            f"Device : {value1.device} at {value1.taken_at} . Value = {value1.value} " # NOQA
+            f"[{value1.motorcycle_count, value1.car_count, value1.smalltruck_count, value1.bigvehicle_count}]" # NOQA
         )
 
     @patch('uuid.uuid4')

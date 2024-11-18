@@ -7,7 +7,8 @@ from core.models import (
 
 
 class SimpleDeviceSerializer(serializers.ModelSerializer):
-    """Simplified serializer for Device to avoid recursion in nested serialization"""
+    """Simplified serializer for Device to avoid recursion in
+    nested serialization"""
 
     class Meta:
         model = IoTDevice
@@ -54,12 +55,14 @@ class DeviceSerializer(serializers.ModelSerializer):
         """Get the latest DeviceValue for the Device"""
         request = self.context.get('request', None)
         if request and hasattr(request, 'user'):
-            latest_value = obj.values.filter(user=request.user).order_by('-taken_at').first()
+            latest_value = (obj.values.filter(user=request.user)
+                            .order_by('-taken_at').first())
         else:
             # If request is not available, do not filter by user
             latest_value = obj.values.order_by('-taken_at').first()
         if latest_value:
-            return DeviceValueSerializer(latest_value, context=self.context).data
+            return DeviceValueSerializer(latest_value,
+                                         context=self.context).data
         return None
 
 
@@ -76,4 +79,3 @@ class ImageSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'image': {'required': True}
         }
-

@@ -26,16 +26,28 @@ DEVICE_URL = reverse('user:iotdevice-list')
 def reverse_value(device_id, value_id=0, action='detail'):
     """Reverse from device value"""
     if action == 'list':
-        return reverse('user:device-value-list', args=[device_id])
-    return reverse('user:device-value-detail', args=[device_id, value_id])
+        return reverse(
+            'user:device-value-list',
+            args=[device_id]
+        )
+    return reverse(
+        'user:device-value-detail',
+        args=[device_id, value_id]
+    )
 
 
 def reverse_device_detail(device_id):
-    return reverse('user:iotdevice-detail', args=[device_id])
+    return reverse(
+        'user:iotdevice-detail',
+        args=[device_id]
+    )
 
 
 def reverse_image(device_id, value_id):
-    return reverse('user:device-value-upload-image', args=[device_id, value_id])
+    return reverse(
+        'user:device-value-upload-image',
+        args=[device_id, value_id]
+    )
 
 
 def create_device(user, **params):
@@ -234,7 +246,11 @@ class PrivateDeviceApiTests(TestCase):
 
         value_id = res.data['id']
 
-        detail_url = reverse_value(device_id=device.id, value_id=value_id, action='detail')
+        detail_url = reverse_value(
+            device_id=device.id,
+            value_id=value_id,
+            action='detail'
+        )
 
         payload = {
             'value': 2,
@@ -247,12 +263,12 @@ class PrivateDeviceApiTests(TestCase):
     def test_device_serializer_latest_value(self):
         """Test that the device serializer includes the latest value"""
         device = create_device(user=self.user)
-        value1 = DeviceValue.objects.create(
+        DeviceValue.objects.create(
             user=self.user,
             device=device,
             value=1,
         )
-        value2 = DeviceValue.objects.create(
+        DeviceValue.objects.create(
             user=self.user,
             device=device,
             value=2

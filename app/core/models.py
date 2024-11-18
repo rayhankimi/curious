@@ -95,5 +95,5 @@ class DeviceValue(models.Model):
     image = models.ImageField(null=True, upload_to=image_file_path)
 
     def __str__(self):
-        return (f"Device : {self.device} at {self.taken_at} . Value = {self.value} "
-                f"[{self.motorcycle_count, self.car_count, self.smalltruck_count, self.bigvehicle_count}]")
+        return (f"Device : {self.device} at {self.taken_at} . Value = {self.value} "  # NOQA
+                f"[{self.motorcycle_count, self.car_count, self.smalltruck_count, self.bigvehicle_count}]")  # NOQA
