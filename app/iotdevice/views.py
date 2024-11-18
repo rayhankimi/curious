@@ -1,7 +1,12 @@
 """
 Views for IoT Device app
 """
-from rest_framework import viewsets
+from rest_framework import (
+    viewsets,
+    status,
+)
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 
@@ -33,19 +38,48 @@ class DeviceViewSet(viewsets.ModelViewSet):
 
 
 class DeviceValueViewSet(viewsets.ModelViewSet):
-    """View for manage Device Values"""
-    queryset = DeviceValue.objects.all().order_by('-id')
+    """View for managing Device Values"""
     serializer_class = serializers.DeviceValueSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+    # Set the lookup fields
+    lookup_field = 'id'
+    lookup_url_kwarg = 'pk'
+
     def get_queryset(self):
-        """Retrieve value for specific devices"""
+        """Retrieve values for specific devices"""
         device_id = self.kwargs.get('device_pk')
-        return DeviceValue.objects.filter(device__id=device_id,
-                                          user=self.request.user).order_by('-taken_at')
+        return DeviceValue.objects.filter(
+            device__id=device_id,
+            user=self.request.user
+        ).order_by('-taken_at')
 
     def perform_create(self, serializer):
-        """Create a new device value with the associated devices"""
+        """Create a new device value with the associated device"""
         device_id = self.kwargs.get('device_pk')
         device = IoTDevice.objects.get(id=device_id)
         serializer.save(user=self.request.user, device=device)
+
+    def get_serializer_class(self):
+        """Return appropriate serializer class"""
+        if self.action == 'upload_image':
+            return serializers.ImageSerializer
+        return self.serializer_class
+
+    @action(methods=['POST'], detail=True, url_path='upload-image')
+    def upload_image(self, request, device_pk=None, pk=None):
+        """Upload an image to a device value"""
+        # Retrieve the device value instance
+        device_value = self.get_object()
+        serializer = self.get_serializer(
+            device_value,
+            data=request.data,
+            partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

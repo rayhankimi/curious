@@ -21,8 +21,7 @@ class DeviceSerializer(serializers.ModelSerializer):
 
 class DeviceValueSerializer(serializers.ModelSerializer):
     """Serializer for the Device Value"""
-
-    device = serializers.PrimaryKeyRelatedField(queryset=IoTDevice.objects.all())
+    device = DeviceSerializer(read_only=True)
 
     class Meta:
         model = DeviceValue
@@ -35,3 +34,20 @@ class DeviceValueSerializer(serializers.ModelSerializer):
                   'smalltruck_count',
                   'bigvehicle_count']
         read_only_fields = ['id', 'taken_at']
+
+
+class ImageSerializer(serializers.ModelSerializer):
+    """Serializer for the image"""
+
+    class Meta:
+        model = DeviceValue
+        fields = [
+            'id',
+            'image',
+        ]
+        read_only_fields = ['id']
+        extra_kwargs = {
+            'image': {
+                'required': True
+            }
+        }

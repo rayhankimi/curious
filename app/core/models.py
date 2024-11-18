@@ -1,3 +1,6 @@
+import os
+import uuid
+
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -6,6 +9,13 @@ from django.contrib.auth.models import (
 )
 
 from app import settings
+
+
+def image_file_path(instance, filename):
+    """Generate file path for new image"""
+    ext = os.path.splitext(filename)[1]
+    filename = f'{uuid.uuid4()}{ext}'
+    return os.path.join('uploads', 'images', filename)
 
 
 class UserManager(BaseUserManager):
@@ -73,13 +83,16 @@ class DeviceValue(models.Model):
         on_delete=models.CASCADE,
         related_name='values',
     )
-    value = models.IntegerField(default=0)
+    value = models.IntegerField(default=0)  # Traffic Value ranged from 1 - 5
+    # Each Vehicle Count
     car_count = models.IntegerField(default=0)
     motorcycle_count = models.IntegerField(default=0)
     smalltruck_count = models.IntegerField(default=0)
     bigvehicle_count = models.IntegerField(default=0)
-
+    # Date posted
     taken_at = models.DateTimeField(auto_now_add=True)
+    # Image File
+    image = models.ImageField(null=True, upload_to=image_file_path)
 
     def __str__(self):
         return (f"Device : {self.device} at {self.taken_at} . Value = {self.value} "

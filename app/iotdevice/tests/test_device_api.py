@@ -1,6 +1,10 @@
 """
 Test for IoT device API
 """
+import tempfile
+import os
+
+from PIL import Image
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -28,6 +32,10 @@ def reverse_value(device_id, value_id=0, action='detail'):
 
 def reverse_device_detail(device_id):
     return reverse('user:iotdevice-detail', args=[device_id])
+
+
+def reverse_image(device_id, value_id):
+    return reverse('user:device-value-upload-image', args=[device_id, value_id])
 
 
 def create_device(user, **params):
@@ -192,22 +200,96 @@ class PrivateDeviceApiTests(TestCase):
             'bigvehicle_count': 1,
         }
 
-        # Gunakan `reverse_value` untuk mendapatkan URL yang benar
         url = reverse_value(device_id=device.id, action='list')
         res = self.client.post(url, payload)
 
-        # Pastikan status code adalah 201 CREATED
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
-        # Ambil objek DeviceValue yang baru dibuat dari database
         device_value = DeviceValue.objects.get(id=res.data['id'])
 
-        # Verifikasi bahwa data tersimpan dengan benar
         for key, value in payload.items():
             if key == 'user' or key == 'device':
                 continue
             self.assertEqual(getattr(device_value, key), value)
 
-        # Verifikasi user dan device yang terkait
         self.assertEqual(self.user, device_value.user)
         self.assertEqual(device, device_value.device)
+
+    def test_change_value(self):
+        """Test changing a device value is allowed"""
+        device = create_device(user=self.user)
+        value_data = {
+            'user': self.user.id,
+            'device': device.id,
+            'value': 1,
+            'motorcycle_count': 2,
+            'car_count': 4,
+            'smalltruck_count': 2,
+            'bigvehicle_count': 1,
+        }
+        create_url = reverse_value(device_id=device.id, action='list')
+        res = self.client.post(create_url, value_data)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+        value_id = res.data['id']
+
+        detail_url = reverse_value(device_id=device.id, value_id=value_id, action='detail')
+
+        payload = {
+            'value': 2,
+            'car_count': 1,
+        }
+        res = self.client.patch(detail_url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+
+class ImageUploadTests(TestCase):
+    """Test image upload"""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = create_user(
+            email='example@rayhank.com',
+            password='changeme'
+        )
+        self.client.force_authenticate(self.user)
+        self.device = create_device(
+            user=self.user,
+        )
+        self.device_value = DeviceValue.objects.create(
+            user=self.user,
+            device=self.device,
+            value=1,
+        )
+
+    def tearDown(self):
+        if self.device_value.image:
+            self.device_value.image.delete()
+
+    def test_upload_image(self):
+        """Test uploading an image"""
+        url = reverse_image(self.device.id, self.device_value.id)
+        with tempfile.NamedTemporaryFile(suffix='.jpg') as image_file:
+            img = Image.new('RGB', (10, 10))
+            img.save(image_file, format='JPEG')
+            image_file.seek(0)
+            payload = {
+                'image': image_file
+            }
+            res = self.client.post(url, payload, format='multipart')
+
+        self.device_value.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('image', res.data)
+        self.assertTrue(os.path.exists(self.device_value.image.path))
+
+    def test_upload_image_bad_request(self):
+        """Test uploading not an image"""
+        url = reverse_image(self.device.id, self.device_value.id)
+        payload = {
+            'image': 'notanimage'
+        }
+        res = self.client.post(url, payload, format='multipart')
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

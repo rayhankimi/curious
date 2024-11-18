@@ -2,6 +2,7 @@ from functools import wraps
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from unittest.mock import patch
 
 from core import models
 
@@ -87,3 +88,12 @@ class ModelTests(TestCase):
             f"Device : {value1.device} at {value1.taken_at} . Value = {value1.value} "
             f"[{value1.motorcycle_count, value1.car_count, value1.smalltruck_count, value1.bigvehicle_count}]"
         )
+
+    @patch('uuid.uuid4')
+    def test_image_name_path(self, mock_uuid):
+        """Test generating image path"""
+        uuid = 'test-uuid'
+        mock_uuid.return_value = uuid
+        file_path = models.image_file_path(None, 'example.png')
+
+        self.assertEqual(file_path, f'uploads/images/{uuid}.png')

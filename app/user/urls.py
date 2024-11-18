@@ -9,8 +9,16 @@ router = routers.DefaultRouter()
 router.register('device', device_views.DeviceViewSet)
 
 # Nested Router
-device_router = routers.NestedDefaultRouter(router, 'device', lookup='device')
-device_router.register('value', device_views.DeviceValueViewSet, basename='device-value')
+device_router = routers.NestedDefaultRouter(
+    router,
+    'device',
+    lookup='device'
+)
+device_router.register(
+    'value',
+    device_views.DeviceValueViewSet,
+    basename='device-value',
+)
 
 app_name = 'user'
 
