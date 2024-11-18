@@ -36,6 +36,16 @@ class DeviceViewSet(viewsets.ModelViewSet):
         """Create a new device"""
         serializer.save(user=self.request.user)
 
+    @action(detail=True, methods=['get'], url_path='latest-value')
+    def latest_value(self, request, pk=None):
+        """Retrieve the latest value for a specific device"""
+        device = self.get_object()
+        latest_value = device.values.order_by('-taken_at').first()
+        if latest_value:
+            serializer = serializers.DeviceValueSerializer(latest_value, context={'request': request})
+            return Response(serializer.data)
+        return Response({'detail': 'No values found for this device.'}, status=404)
+
 
 class DeviceValueViewSet(viewsets.ModelViewSet):
     """View for managing Device Values"""

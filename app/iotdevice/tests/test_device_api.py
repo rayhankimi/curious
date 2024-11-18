@@ -244,6 +244,64 @@ class PrivateDeviceApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
+    def test_device_serializer_latest_value(self):
+        """Test that the device serializer includes the latest value"""
+        device = create_device(user=self.user)
+        value1 = DeviceValue.objects.create(
+            user=self.user,
+            device=device,
+            value=1,
+        )
+        value2 = DeviceValue.objects.create(
+            user=self.user,
+            device=device,
+            value=2
+        )
+        url = reverse_device_detail(device.id)
+        res = self.client.get(url)
+        self.assertIn('latest_value', res.data)
+
+    def test_get_latest_value_when_no_value(self):
+        """Test that latest_value is None when device has no value"""
+        device = create_device(user=self.user)
+
+        url = reverse_device_detail(device.id)
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('latest_value', res.data)
+        self.assertIsNone(res.data['latest_value'])
+
+    def test_device_list_includes_latest_value(self):
+        """Test that the device list includes the latest value"""
+        device1 = create_device(user=self.user)
+        device2 = create_device(user=self.user)
+        DeviceValue.objects.create(
+            user=self.user,
+            device=device1,
+            value=1,
+        )
+        value2 = DeviceValue.objects.create(
+            user=self.user,
+            device=device2,
+            value=2,
+        )
+
+        res = self.client.get(DEVICE_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 2)
+
+        for device_data in res.data:
+            self.assertIn('latest_value', device_data)
+            if device_data['id'] == device1.id:
+                self.assertIsNotNone(device_data['latest_value'])
+                self.assertEqual(device_data['latest_value']['value'], 1)
+            elif device_data['id'] == device2.id:
+                self.assertIsNotNone(device_data['latest_value'])
+                self.assertEqual(device_data['latest_value']['id'], value2.id)
+                self.assertEqual(device_data['latest_value']['value'], 2)
+
 
 class ImageUploadTests(TestCase):
     """Test image upload"""
@@ -293,3 +351,33 @@ class ImageUploadTests(TestCase):
         }
         res = self.client.post(url, payload, format='multipart')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_latest_value_include_image(self):
+        """Test that hitting latest value include image"""
+        device = create_device(user=self.user)
+        device_value = DeviceValue.objects.create(
+            user=self.user,
+            device=device,
+            value=1,
+        )
+
+        with tempfile.NamedTemporaryFile(suffix='.jpg') as image_file:
+            img = Image.new('RGB', (10, 10))
+            img.save(image_file, format='JPEG')
+            image_file.seek(0)
+            device_value.image.save('test.jpg', image_file, save=True)
+
+        url = reverse_device_detail(device.id)
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('latest_value', res.data)
+
+        latest_value = res.data['latest_value']
+        self.assertIsNotNone(latest_value)
+        self.assertIn('image', latest_value)
+        self.assertIsNotNone(latest_value['image'])
+
+        self.assertIn('/static/media/uploads/images', latest_value['image'])
+
+        device_value.image.delete()
