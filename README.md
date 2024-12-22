@@ -1,1 +1,10 @@
-# Django Rest based API to store periodical traffic data from Firebase RTDB using PostgreSQL
+<h1> Django REST for traffic IoT API. </h1>
+
+<h2> Stack :
+  
+<ul>
+  <li> Type : REST API</li>
+  <li> DB : PostgreSQL using psycopg2 </li>
+  <li> HTTP Server : Granian WSGI </li>
+  <li> Proxy : nginx </li>
+</ul>
