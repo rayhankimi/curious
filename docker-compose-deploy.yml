@@ -5,6 +5,7 @@ services:
     restart: always
     volumes:
       - static-data:/vol/static
+      - media-data:/vol/web/media
     environment:
       - DB_HOST=db
       - DB_NAME=${DB_NAME}
@@ -35,6 +36,7 @@ services:
       - "80:8000"
     volumes:
       - static-data:/vol/static
+      - media-data:/vol/web/media
     environment:
       - LISTEN_PORT=8000
       - APP_HOST=app
@@ -43,3 +45,4 @@ services:
 volumes:
   postgres-data:
   static-data:
+  media-data:

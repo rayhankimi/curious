@@ -4,6 +4,10 @@ server {
     location /static {
         alias /vol/static;
     }
+    
+    location /static/media {
+	alias /vol/web/media;
+    }
 
     location / {
         uwsgi_pass           ${APP_HOST}:${APP_PORT};
