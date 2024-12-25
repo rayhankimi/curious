@@ -5,4 +5,4 @@ psycopg2>=2.9.9,<3.0.0
 Pillow>=10.4.0,<10.6.0
 django_extensions
 drf-nested-routers
-granian==1.7.1
+uwsgi==2.0.28
