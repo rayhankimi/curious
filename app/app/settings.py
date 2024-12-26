@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'rest_framework',
     'rest_framework.authtoken',
+    'corsheaders',
     'core',
     'iotdevice',
     'drf_spectacular',
@@ -57,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'app.urls'
@@ -149,3 +151,10 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     'COMPONENT_SPLIT_REQUEST': True,
 }
+
+ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '*')
+
+if ALLOWED_ORIGINS != '*':
+    CORS_ALLOWED_ORIGINS = ALLOWED_ORIGINS.split(',')
+else:
+    CORS_ALLOW_ALL_ORIGINS = True
