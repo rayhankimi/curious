@@ -92,7 +92,7 @@ class DeviceValue(models.Model):
     # Date posted
     taken_at = models.DateTimeField(auto_now_add=True)
     # Image File
-    image = models.ImageField(null=True, upload_to=image_file_path)
+    image = models.ImageField(null=True, upload_to=image_file_path)  # NOQA
 
     def __str__(self):
         return (f"Device : {self.device} at {self.taken_at} . Value = {self.value} "  # NOQA

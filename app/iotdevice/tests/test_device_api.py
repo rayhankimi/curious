@@ -100,14 +100,14 @@ class PrivateDeviceApiTests(TestCase):
         devices = IoTDevice.objects.filter(user=self.user).order_by('-id')
         serializer = DeviceSerializer(devices, many=True)
 
-        response_ids = [device['id'] for device in res.data]
+        response_ids = [device['id'] for device in res.data['results']]
         expected_ids = [device['id'] for device in serializer.data]
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(response_ids, expected_ids)
 
-    def test_recipes_limited_to_user(self):
-        """Test that retrieving recipes for authenticated user is limited"""
+    def test_devices_limited_to_user(self):
+        """Test that retrieving devices for authenticated user is limited"""
         user2 = create_user(
             email='anotheruser@rayhank.com',
             password='changeme123'
@@ -120,9 +120,9 @@ class PrivateDeviceApiTests(TestCase):
         devices = IoTDevice.objects.filter(user=self.user)
         serializer = DeviceSerializer(devices, many=True)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serializer.data)
+        self.assertEqual(res.data['results'], serializer.data)
 
-        self.assertEqual(res.data, serializer.data)
+
 
     def test_create_device(self):
         """Test creating a new device"""
@@ -260,6 +260,57 @@ class PrivateDeviceApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
+    def test_get_value_with_pagination(self):
+        """Test retrieving device values with pagination and order direction"""
+        device = create_device(user=self.user)
+
+        # Buat data
+        values = [
+            DeviceValue.objects.create(
+                user=self.user,
+                device=device,
+                value=i,
+                motorcycle_count=i,
+                car_count=i,
+                smalltruck_count=i,
+                bigvehicle_count=i,
+            )
+            for i in range(1, 21)
+        ]
+
+        url = reverse_value(device_id=device.id, action='list')
+
+        # Pagination (page=1)
+        res = self.client.get(f'{url}?page=1')
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        data = res.data
+        self.assertIn('count', data)
+        self.assertIn('next', data)
+        self.assertIn('previous', data)
+        self.assertIn('results', data)
+
+        self.assertEqual(data['count'], 20)
+        self.assertEqual(len(data['results']), 20)  # Default page size
+
+        # Test order_direction=first
+        res = self.client.get(f'{url}?order_direction=first&page=1')
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        results = res.data['results']
+        sorted_values = sorted(values, key=lambda x: x.taken_at)  # Urutkan manual
+        self.assertEqual(results[0]['id'], sorted_values[0].id)
+        self.assertEqual(results[-1]['id'], sorted_values[-1].id)
+
+        # Test order_direction=last
+        res = self.client.get(f'{url}?order_direction=last&page=1')
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        results = res.data['results']
+        sorted_values = sorted(values, key=lambda x: x.taken_at, reverse=True)
+        self.assertEqual(results[0]['id'], sorted_values[0].id)
+        self.assertEqual(results[-1]['id'], sorted_values[-1].id)
+
     def test_device_serializer_latest_value(self):
         """Test that the device serializer includes the latest value"""
         device = create_device(user=self.user)
@@ -306,9 +357,9 @@ class PrivateDeviceApiTests(TestCase):
         res = self.client.get(DEVICE_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 2)
+        self.assertEqual(len(res.data['results']), 2)
 
-        for device_data in res.data:
+        for device_data in res.data['results']:
             self.assertIn('latest_value', device_data)
             if device_data['id'] == device1.id:
                 self.assertIsNotNone(device_data['latest_value'])

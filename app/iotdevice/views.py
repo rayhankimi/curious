@@ -1,6 +1,7 @@
 """
 Views for IoT Device app
 """
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import (
     viewsets,
     status,
@@ -70,10 +71,17 @@ class DeviceValueViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Retrieve values for specific devices"""
         device_id = self.kwargs.get('device_pk')
-        return DeviceValue.objects.filter(
+        order_direction = self.request.query_params.get('order_direction', 'last')  # Default to last
+
+        queryset = DeviceValue.objects.filter(
             device__id=device_id,
             user=self.request.user
         ).order_by('-taken_at')
+
+        if order_direction == 'first':
+            queryset = queryset.reverse()
+
+        return queryset
 
     def perform_create(self, serializer):
         """Create a new device value with the associated device"""
@@ -103,3 +111,19 @@ class DeviceValueViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="order_direction",
+                description="Order direction of the results. "
+                            "Use 'last' (default) for latest first or 'first' for earliest first.",
+                required=False,
+                type=str,
+                enum=['first', 'last']
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        """Retrieve a list of device values"""
+        return super().list(request, *args, **kwargs)

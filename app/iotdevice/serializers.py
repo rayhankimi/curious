@@ -77,5 +77,5 @@ class ImageSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id']
         extra_kwargs = {
-            'image': {'required': True}
+            'image': {'required': False}
         }
