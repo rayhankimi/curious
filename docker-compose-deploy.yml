@@ -41,7 +41,8 @@ services:
       - LISTEN_PORT=8000
       - APP_HOST=app
       - APP_PORT=9000
-
+      - FRONTEND_DOMAIN=${ALLOWED_ORIGINS}
+      
 volumes:
   postgres-data:
   static-data:
