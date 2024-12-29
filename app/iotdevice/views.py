@@ -27,7 +27,9 @@ class DeviceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Retrieve devices for authenticated user"""
-        return self.queryset.filter(user=self.request.user)
+        if self.request.user.is_authenticated:
+            return self.queryset.filter(user=self.request.user)
+        return self.queryset.none()
 
     def get_serializer_class(self):
         """Return serializer class for requests"""
@@ -43,7 +45,14 @@ class DeviceViewSet(viewsets.ModelViewSet):
             permission_classes=[AllowAny])
     def latest_value(self, request, pk=None):
         """Retrieve the latest value for a specific device"""
-        device = self.get_object()
+        try:
+            device = IoTDevice.objects.get(pk=pk)
+        except IoTDevice.DoesNotExist:
+            return Response(
+                {'detail': 'Device not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
         latest_value = device.values.order_by('-taken_at').first()
 
         if latest_value:
@@ -57,7 +66,7 @@ class DeviceViewSet(viewsets.ModelViewSet):
             {
                 'detail': 'No values found for this device.'
             },
-            status=404
+            status=status.HTTP_404_NOT_FOUND
         )
 
 
