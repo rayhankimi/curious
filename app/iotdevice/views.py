@@ -8,7 +8,7 @@ from rest_framework import (
 )
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import TokenAuthentication
 
 from core.models import (
@@ -37,7 +37,10 @@ class DeviceViewSet(viewsets.ModelViewSet):
         """Create a new device"""
         serializer.save(user=self.request.user)
 
-    @action(detail=True, methods=['get'], url_path='latest-value')
+    @action(detail=True,
+            methods=['get'],
+            url_path='latest-value',
+            permission_classes=[AllowAny])
     def latest_value(self, request, pk=None):
         """Retrieve the latest value for a specific device"""
         device = self.get_object()
