@@ -1,15 +1,18 @@
 from rest_framework import (
     generics,
     permissions,
-    authentication,
+    authentication, viewsets,
 )
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
 
 from user.serializers import (
     UserSerializer,
-    AuthTokenSerializer
+    AuthTokenSerializer,
+    TodoSerializer,
 )
+
+from core.models import ToDoList
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -32,3 +35,18 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         """Retrieve and return authenticated user"""
         return self.request.user
+
+
+class TodoViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing ToDo List (CRUD)"""
+    serializer_class = TodoSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Return objects for the current authenticated user only"""
+        return ToDoList.objects.filter(user=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        """Create a new ToDoList"""
+        serializer.save(user=self.request.user)

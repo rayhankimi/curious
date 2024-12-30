@@ -90,8 +90,8 @@ class ModelTests(TestCase):
         )
         self.assertEqual(
             str(value1),
-            f"Device : {value1.device} at {value1.taken_at} . Value = {value1.value} " # NOQA
-            f"[{value1.motorcycle_count, value1.car_count, value1.smalltruck_count, value1.bigvehicle_count}]" # NOQA
+            f"Device : {value1.device} at {value1.taken_at} . Value = {value1.value} "  # NOQA
+            f"[{value1.motorcycle_count, value1.car_count, value1.smalltruck_count, value1.bigvehicle_count}]"  # NOQA
         )
 
     @patch('uuid.uuid4')
@@ -102,3 +102,17 @@ class ModelTests(TestCase):
         file_path = models.image_file_path(None, 'example.png')
 
         self.assertEqual(file_path, f'uploads/images/{uuid}.png')
+
+    def test_create_todo_list(self):
+        """Test creating a new todo list"""
+        user = create_user()
+        todo_list = models.ToDoList.objects.create(
+            user=user,
+            title='Test Todo List',
+            description='This is a test todo list',
+        )
+
+        self.assertEqual(
+            str(todo_list),
+            f"{todo_list.title} - {todo_list.description}"
+        )

@@ -4,6 +4,8 @@ from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
 
+from core.models import ToDoList
+
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for the User model"""
@@ -57,3 +59,30 @@ class AuthTokenSerializer(serializers.Serializer):
             raise serializers.ValidationError(msg, code='authorization')
         attrs['user'] = user
         return attrs
+
+
+class TodoSerializer(serializers.ModelSerializer):
+    """Serializer for the Todo model"""
+
+    class Meta:
+        model = ToDoList
+        fields = [
+            'id',
+            'user',
+            'title',
+            'description',
+            'created_at',
+            'updated_at',
+            'due_date',
+            'related_file',
+            'is_completed',
+        ]
+        extra_kwargs = {
+            'due_date': {
+                'required': False,
+            },
+            'related_file': {
+                'required': False,
+            }
+        }
+        read_only_fields = ['id', 'user', 'created_at']
