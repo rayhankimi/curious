@@ -7,6 +7,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin
 )
+from django.utils import timezone
 
 from app import settings
 
@@ -16,6 +17,17 @@ def image_file_path(instance, filename):
     ext = os.path.splitext(filename)[1]
     filename = f'{uuid.uuid4()}{ext}'
     return os.path.join('uploads', 'images', filename)
+
+
+def todo_file_path(instance, filename):
+    """Generate file path for new t0d0 list"""
+    ext = os.path.splitext(filename)[1]
+    filename = f'{uuid.uuid4()}{ext}'
+    return os.path.join('uploads', 'files', filename)
+
+
+def one_week_later():
+    return timezone.now() + timezone.timedelta(days=7)
 
 
 class UserManager(BaseUserManager):
@@ -57,6 +69,24 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
+class ToDoList(models.Model):
+    """User T0D0 List"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    due_date = models.DateTimeField(default=one_week_later)
+    related_file = models.FileField(null=True, upload_to=todo_file_path)
+    is_completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.title} - {self.description}"
+
+
 class IoTDevice(models.Model):
     """IotDevice model / Object"""
     user = models.ForeignKey(
@@ -92,7 +122,7 @@ class DeviceValue(models.Model):
     # Date posted
     taken_at = models.DateTimeField(auto_now_add=True)
     # Image File
-    image = models.ImageField(null=True, upload_to=image_file_path)  # NOQA
+    image = models.ImageField(null=True, upload_to=image_file_path)
 
     def __str__(self):
         return (f"Device : {self.device} at {self.taken_at} . Value = {self.value} "  # NOQA
