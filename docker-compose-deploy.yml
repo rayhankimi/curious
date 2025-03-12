@@ -3,6 +3,8 @@ services:
     build:
       context: .
     restart: always
+    networks:
+      - backend
     volumes:
       - static-data:/vol/static
       - media-data:/vol/web/media
@@ -19,6 +21,9 @@ services:
   db:
     image: postgres:13-alpine
     restart: always
+    networks:
+      - backend
+      - monitoring  
     volumes:
       - postgres-data:/var/lib/postgresql/data
     environment:
@@ -32,6 +37,8 @@ services:
     restart: always
     depends_on:
       - app
+    networks:
+      - backend
     ports:
       - "80:8000"
     volumes:
@@ -42,8 +49,32 @@ services:
       - APP_HOST=app
       - APP_PORT=9000
       - FRONTEND_DOMAIN=${ALLOWED_ORIGINS}
-      
+
+  grafana:
+    image: grafana/grafana
+    restart: always
+    networks:
+      - monitoring
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASS}
+      - GF_DATABASE_TYPE=postgres
+      - GF_DATABASE_HOST=db:5432
+      - GF_DATABASE_NAME=${DB_NAME}
+      - GF_DATABASE_USER=${DB_USER}
+      - GF_DATABASE_PASSWORD=${DB_PASS}
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+networks:
+  backend:
+    driver: bridge
+  monitoring:
+    driver: bridge
+
 volumes:
   postgres-data:
   static-data:
   media-data:
+  grafana-data:
